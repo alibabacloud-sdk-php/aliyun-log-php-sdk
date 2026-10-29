@@ -839,6 +839,20 @@ class RequestCore
 	}
 
 	/**
+	 * Closes legacy cURL resources. PHP 8 uses CurlHandle objects that are
+	 * released automatically when their last reference is removed.
+	 *
+	 * @param resource|\\CurlHandle $curl_handle
+	 */
+	private static function close_curl_handle($curl_handle)
+	{
+		if (is_resource($curl_handle))
+		{
+			curl_close($curl_handle);
+		}
+	}
+
+	/**
 	 * Describes a cURL handle without relying on object-to-string conversion.
 	 *
 	 * @param resource|\CurlHandle $curl_handle
@@ -935,7 +949,7 @@ class RequestCore
 		}
 		finally
 		{
-			curl_close($curl_handle);
+			self::close_curl_handle($curl_handle);
 		}
 	}
 
@@ -1068,7 +1082,7 @@ class RequestCore
 
 					$done_key = self::get_curl_handle_key($done['handle']);
 					unset($attached_handles[$done_key]);
-					curl_close($done['handle']);
+					self::close_curl_handle($done['handle']);
 					unset($open_handles[$done_key]);
 				}
 
@@ -1093,7 +1107,7 @@ class RequestCore
 
 			foreach ($open_handles as $handle)
 			{
-				curl_close($handle);
+				self::close_curl_handle($handle);
 			}
 
 			curl_multi_close($multi_handle);
